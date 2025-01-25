@@ -141,7 +141,7 @@ const ExpenseTracker = () => {
         })
         : [];
 
-    // Update pie chart whenever filteredExpenses or monthYear changes
+    // Update pie chart whenever expenses or monthYear changes
     useEffect(() => {
         if (monthYear) {
             const categoryTotals = filteredExpenses.reduce((acc, expense) => {
@@ -175,13 +175,22 @@ const ExpenseTracker = () => {
                             legend: {
                                 position: "bottom",
                             },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        const label = context.label || '';
+                                        const value = context.raw || 0;
+                                        return `${label}: $${value.toFixed(2)}`; // Add dollar sign and format to 2 decimal places
+                                    },
+                                },
+                            },
                         },
                     },
                 });
                 setPieChart(newPieChart);
             }
         }
-    }, [filteredExpenses, monthYear]);
+    }, [expenses, monthYear]); // Only update when expenses or monthYear changes
 
     // Cleanup the chart when the component unmounts
     useEffect(() => {
