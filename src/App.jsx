@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { Chart } from "chart.js/auto";
+import {useState, useEffect} from "react";
+import {Chart} from "chart.js/auto";
 import expenseDB from "./expenseDB";
-import { Button, TextField, MenuItem, Box, Typography, Paper, Grid, Container } from "@mui/material";
-import { createTheme, ThemeProvider, styled } from "@mui/material/styles";
+import {Button, TextField, MenuItem, Box, Typography, Paper, Grid, Container} from "@mui/material";
+import {createTheme, ThemeProvider, styled} from "@mui/material/styles";
 
 const theme = createTheme({
     palette: {
@@ -22,6 +22,27 @@ const StyledButton = styled(Button)(({ theme }) => ({
     '&:hover': {
         backgroundColor: theme.palette.primary.main,
         color: theme.palette.secondary.main,
+    },
+}));
+
+// Custom styled TextField
+const StyledTextField = styled(TextField)(({theme}) => ({
+    '& .MuiInputLabel-root': {
+        color: theme.palette.primary.main, // Label color
+    },
+    '& .MuiOutlinedInput-root': {
+        '& fieldset': {
+            borderColor: theme.palette.primary.main, // Border color
+        },
+        '&:hover fieldset': {
+            borderColor: theme.palette.primary.dark, // Border color on hover
+        },
+        '&.Mui-focused fieldset': {
+            borderColor: theme.palette.primary.main, // Border color when focused
+        },
+    },
+    '& .MuiInputBase-input': {
+        color: theme.palette.primary.main, // Input text color
     },
 }));
 
@@ -77,7 +98,11 @@ const ExpenseTracker = () => {
             }
             const newExpense = { ...formData, amount: parseFloat(formData.amount) };
             const id = await expenseDB.save(newExpense);
-            setExpenses((prev) => [...prev, { ...newExpense, id }]);
+            const updatedExpenses = [...expenses, {
+                ...newExpense,
+                id
+            }].sort((a, b) => new Date(b.date) - new Date(a.date));
+            setExpenses(updatedExpenses);
             setFormData({ amount: "", category: "food", description: "", date: "" });
             showMessage("Expense added successfully!");
         } catch (error) {
@@ -96,7 +121,8 @@ const ExpenseTracker = () => {
     useEffect(() => {
         const fetchExpenses = async () => {
             const storedExpenses = await expenseDB.getAll();
-            setExpenses(storedExpenses);
+            const sortedExpenses = storedExpenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+            setExpenses(sortedExpenses);
         };
         fetchExpenses();
     }, []);
@@ -119,8 +145,7 @@ const ExpenseTracker = () => {
 
     const updatePieChart = (filteredExpenses) => {
         const categoryTotals = filteredExpenses.reduce((acc, expense) => {
-            acc[expense.category] =
-                (acc[expense.category] || 0) + expense.amount;
+            acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
             return acc;
         }, {});
 
@@ -129,9 +154,7 @@ const ExpenseTracker = () => {
             datasets: [
                 {
                     data: Object.values(categoryTotals),
-                    backgroundColor: Object.keys(categoryTotals).map(
-                        (key) => CHART_COLORS[key]
-                    ),
+                    backgroundColor: Object.keys(categoryTotals).map((key) => CHART_COLORS[key]),
                 },
             ],
         };
@@ -176,7 +199,7 @@ const ExpenseTracker = () => {
                             <Paper elevation={3} style={{ padding: "20px" }}>
                                 <Typography variant="h5" gutterBottom>Add New Expense</Typography>
                                 <form onSubmit={addExpense}>
-                                    <TextField
+                                    <StyledTextField
                                         fullWidth
                                         margin="normal"
                                         label="Amount"
@@ -187,7 +210,7 @@ const ExpenseTracker = () => {
                                         required
                                         inputProps={{ step: "0.01", min: "0" }}
                                     />
-                                    <TextField
+                                    <StyledTextField
                                         fullWidth
                                         margin="normal"
                                         select
@@ -202,8 +225,8 @@ const ExpenseTracker = () => {
                                                 {CATEGORIES[key]}
                                             </MenuItem>
                                         ))}
-                                    </TextField>
-                                    <TextField
+                                    </StyledTextField>
+                                    <StyledTextField
                                         fullWidth
                                         margin="normal"
                                         label="Description"
@@ -212,7 +235,7 @@ const ExpenseTracker = () => {
                                         onChange={handleInputChange}
                                         required
                                     />
-                                    <TextField
+                                    <StyledTextField
                                         fullWidth
                                         margin="normal"
                                         label="Date"
@@ -233,7 +256,7 @@ const ExpenseTracker = () => {
                         <Grid item xs={12} md={6}>
                             <Paper elevation={3} style={{ padding: "20px" }}>
                                 <Typography variant="h5" gutterBottom>View Expenses</Typography>
-                                <TextField
+                                <StyledTextField
                                     fullWidth
                                     margin="normal"
                                     label="Select Month and Year"
