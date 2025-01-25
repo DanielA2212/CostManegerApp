@@ -4,6 +4,7 @@ import expenseDB from "./expenseDB";
 import {Button, TextField, MenuItem, Box, Typography, Paper, Grid, Container} from "@mui/material";
 import {createTheme, ThemeProvider, styled} from "@mui/material/styles";
 
+//font and background colors for buttons
 const theme = createTheme({
     palette: {
         primary: {
@@ -113,7 +114,8 @@ const ExpenseTracker = () => {
     const deleteExpense = async (id) => {
         if (window.confirm("Are you sure you want to delete this expense?")) {
             await expenseDB.delete(id);
-            setExpenses((prev) => prev.filter((expense) => expense.id !== id));
+            const updatedExpenses = expenses.filter((expense) => expense.id !== id);
+            setExpenses(updatedExpenses);
             showMessage("Expense deleted successfully!");
         }
     };
@@ -127,57 +129,68 @@ const ExpenseTracker = () => {
         fetchExpenses();
     }, []);
 
-    const generateReport = () => {
-        if (!monthYear) {
-            showMessage("Please select a month and year", "error");
-            return;
-        }
-        const [year, month] = monthYear.split("-").map(Number);
-        const filteredExpenses = expenses.filter((expense) => {
+    // Filter expenses based on the selected month and year
+    const filteredExpenses = monthYear
+        ? expenses.filter((expense) => {
             const expenseDate = new Date(expense.date);
+            const [year, month] = monthYear.split("-").map(Number);
             return (
                 expenseDate.getFullYear() === year &&
                 expenseDate.getMonth() === month - 1
             );
-        });
-        updatePieChart(filteredExpenses);
-    };
+        })
+        : [];
 
-    const updatePieChart = (filteredExpenses) => {
-        const categoryTotals = filteredExpenses.reduce((acc, expense) => {
-            acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
-            return acc;
-        }, {});
+    // Update pie chart whenever filteredExpenses or monthYear changes
+    useEffect(() => {
+        if (monthYear) {
+            const categoryTotals = filteredExpenses.reduce((acc, expense) => {
+                acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
+                return acc;
+            }, {});
 
-        const data = {
-            labels: Object.keys(categoryTotals).map((key) => CATEGORIES[key]),
-            datasets: [
-                {
-                    data: Object.values(categoryTotals),
-                    backgroundColor: Object.keys(categoryTotals).map((key) => CHART_COLORS[key]),
-                },
-            ],
-        };
-
-        if (pieChart) {
-            pieChart.destroy();
-        }
-
-        const ctx = document.getElementById("pieChart").getContext("2d");
-        const newPieChart = new Chart(ctx, {
-            type: "pie",
-            data: data,
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: "bottom",
+            const data = {
+                labels: Object.keys(categoryTotals).map((key) => CATEGORIES[key]),
+                datasets: [
+                    {
+                        data: Object.values(categoryTotals),
+                        backgroundColor: Object.keys(categoryTotals).map((key) => CHART_COLORS[key]),
                     },
-                },
-            },
-        });
-        setPieChart(newPieChart);
-    };
+                ],
+            };
+
+            if (pieChart) {
+                // Update the existing chart data
+                pieChart.data = data;
+                pieChart.update();
+            } else {
+                // Create a new chart if it doesn't exist
+                const ctx = document.getElementById("pieChart").getContext("2d");
+                const newPieChart = new Chart(ctx, {
+                    type: "pie",
+                    data: data,
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: "bottom",
+                            },
+                        },
+                    },
+                });
+                setPieChart(newPieChart);
+            }
+        }
+    }, [filteredExpenses, monthYear]);
+
+    // Cleanup the chart when the component unmounts
+    useEffect(() => {
+        return () => {
+            if (pieChart) {
+                pieChart.destroy();
+            }
+        };
+    }, [pieChart]);
 
     return (
         <ThemeProvider theme={theme}>
@@ -245,6 +258,15 @@ const ExpenseTracker = () => {
                                         onChange={handleInputChange}
                                         required
                                         InputLabelProps={{ shrink: true }}
+                                        sx={{
+                                            '& input[type="date"]::-webkit-calendar-picker-indicator': {
+                                                filter: 'invert(1)', // Invert the color of the calendar icon
+                                                color: theme.palette.primary.main, // Change the color of the calendar icon
+                                            },
+                                            '& input[type="date"]::-webkit-inner-spin-button, & input[type="date"]::-webkit-clear-button': {
+                                                display: 'none', // Hide the spin and clear buttons
+                                            },
+                                        }}
                                     />
                                     <StyledButton type="submit" fullWidth>
                                         Add Expense
@@ -263,25 +285,39 @@ const ExpenseTracker = () => {
                                     type="month"
                                     value={monthYear}
                                     onChange={(e) => setMonthYear(e.target.value)}
+                                    sx={{
+                                        '& input[type="month"]::-webkit-calendar-picker-indicator': {
+                                            filter: 'invert(1)',
+                                            color: theme.palette.primary.main,
+                                        },
+                                        '& input[type="month"]::-webkit-inner-spin-button, & input[type="month"]::-webkit-clear-button': {
+                                            display: 'none',
+                                        },
+                                    }}
                                 />
-                                <StyledButton onClick={generateReport} fullWidth>
-                                    Generate Report
-                                </StyledButton>
 
                                 <Box mt={4}>
-                                    {expenses.map((expense) => (
-                                        <Box key={expense.id} mb={2}>
-                                            <Typography variant="body1">
-                                                {expense.date}: ${expense.amount.toFixed(2)} - {CATEGORIES[expense.category]} ({expense.description})
-                                            </Typography>
-                                            <StyledButton
-                                                onClick={() => deleteExpense(expense.id)}
-                                                fullWidth
-                                            >
-                                                Delete
-                                            </StyledButton>
-                                        </Box>
-                                    ))}
+                                    {monthYear && filteredExpenses.length === 0 ? (
+                                        <Typography variant="body1" style={{color: "gray"}}>
+                                            No expenses for this month.
+                                        </Typography>
+                                    ) : (
+                                        filteredExpenses.map((expense) => (
+                                            <Box key={expense.id} mb={2}>
+                                                <Typography variant="body1">
+                                                    {expense.date}:
+                                                    ${expense.amount.toFixed(2)} - {CATEGORIES[expense.category]} ({expense.description})
+                                                </Typography>
+                                                <StyledButton
+                                                    onClick={() => deleteExpense(expense.id)}
+                                                    fullWidth
+                                                    variant="delete"
+                                                >
+                                                    Delete
+                                                </StyledButton>
+                                            </Box>
+                                        ))
+                                    )}
                                 </Box>
                                 <canvas id="pieChart" style={{ marginTop: "20px" }}></canvas>
                             </Paper>
