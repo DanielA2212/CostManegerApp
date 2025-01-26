@@ -89,7 +89,7 @@ const ExpenseTracker = () => {
         e.preventDefault();
         try {
             if (!formData.amount || formData.amount <= 0) {
-                throw new Error("Amount must be greater than 0");
+                throw new Error("Amount Must Be Greater Than 0");
             }
             if (!formData.description.trim()) {
                 throw new Error("Description is required");
@@ -105,18 +105,18 @@ const ExpenseTracker = () => {
             }].sort((a, b) => new Date(b.date) - new Date(a.date));
             setExpenses(updatedExpenses);
             setFormData({ amount: "", category: "food", description: "", date: "" });
-            showMessage("Expense added successfully!");
+            showMessage("Expense Added Successfully!");
         } catch (error) {
-            showMessage(error.message, "error");
+            showMessage(error.message, "Error");
         }
     };
 
     const deleteExpense = async (id) => {
-        if (window.confirm("Are you sure you want to delete this expense?")) {
+        if (window.confirm("Are You Sure You Want To Delete This Expense?")) {
             await expenseDB.delete(id);
             const updatedExpenses = expenses.filter((expense) => expense.id !== id);
             setExpenses(updatedExpenses);
-            showMessage("Expense deleted successfully!");
+            showMessage("Expense Deleted Successfully!");
         }
     };
 
@@ -209,8 +209,12 @@ const ExpenseTracker = () => {
 
                     {message.text && (
                         <Typography
-                            variant="body1"
-                            style={{ color: message.type === "error" ? "red" : "green" }}
+                            variant="h6"
+                            style={{
+                                color: message.type === "error" ? "red" : "limegreen",
+                                fontSize: "1.5rem",
+                                fontWeight: "bold",
+                            }}
                         >
                             {message.text}
                         </Typography>
