@@ -335,7 +335,7 @@ const ExpenseTracker = () => {
                                                     variant="body1"
                                                     style={{color: CHART_COLORS[expense.category]}} // Apply color to category text
                                                 >
-                                                    {expense.date}:
+                                                    {new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(expense.date))}:
                                                     ${expense.amount.toFixed(2)} - {CATEGORIES[expense.category]} ({expense.description})
                                                 </Typography>
                                                 <StyledButton
