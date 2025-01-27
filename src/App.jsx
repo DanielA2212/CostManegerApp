@@ -11,6 +11,7 @@ const theme = createTheme({
     palette: {
         primary: {
             main: "#4caf50", // Green
+            dark: "#434d55",
         },
         secondary: {
             main: "#ffffff", // White
@@ -275,8 +276,7 @@ const ExpenseTracker = () => {
                                         InputLabelProps={{ shrink: true }}
                                         sx={{
                                             '& input[type="date"]::-webkit-calendar-picker-indicator': {
-                                                filter: 'invert(1)', // Invert the color of the calendar icon
-                                                color: theme.palette.primary.main, // Change the color of the calendar icon
+                                                color: theme.palette.primary.dark, // Change the color of the calendar icon
                                             },
                                             '& input[type="date"]::-webkit-inner-spin-button, & input[type="date"]::-webkit-clear-button': {
                                                 display: 'none', // Hide the spin and clear buttons
@@ -302,8 +302,7 @@ const ExpenseTracker = () => {
                                     onChange={(e) => setMonthYear(e.target.value)}
                                     sx={{
                                         '& input[type="month"]::-webkit-calendar-picker-indicator': {
-                                            filter: 'invert(1)',
-                                            color: theme.palette.primary.main,
+                                            color: theme.palette.primary.dark,
                                         },
                                         '& input[type="month"]::-webkit-inner-spin-button, & input[type="month"]::-webkit-clear-button': {
                                             display: 'none',
