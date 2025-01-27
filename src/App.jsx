@@ -19,14 +19,26 @@ const theme = createTheme({
     },
 });
 
-const StyledButton = styled(Button)(({ theme }) => ({
-    backgroundColor: theme.palette.secondary.main,
-    color: theme.palette.primary.main,
-    border: `1px solid ${theme.palette.primary.main}`,
-    '&:hover': {
-        backgroundColor: theme.palette.primary.main,
-        color: theme.palette.secondary.main,
-    },
+const StyledButton = styled(Button)(({ theme, variant }) => ({
+    ...(variant === "delete" && {
+        backgroundColor: theme.palette.secondary.main,
+        color: "Maroon",
+        border: `1px solid ${"Maroon"}`,
+        '&:hover': {
+            backgroundColor: "Maroon", // Dark red on hover
+            color: "white",
+            border: `1px solid ${"Maroon"}`,
+        },
+    }),
+    ...(!variant && {
+        backgroundColor: theme.palette.secondary.main,
+        color: theme.palette.primary.main,
+        border: `1px solid ${theme.palette.primary.main}`,
+        '&:hover': {
+            backgroundColor: theme.palette.primary.main,
+            color: theme.palette.secondary.main,
+        },
+    }),
 }));
 
 // Custom styled TextField
@@ -71,11 +83,11 @@ const ExpenseTracker = () => {
     };
 
     const CHART_COLORS = {
-        food: "#cc1824",
+        food: "#cc184e",
         transportation: "#0066cc",
-        utilities: "#f5921b",
-        entertainment: "#63993d",
-        other: "#3d2785",
+        utilities: "#f18e04",
+        entertainment: "#0d6b10",
+        other: "#6619b5",
     };
 
     const showMessage = (text, type = "success") => {
@@ -176,10 +188,11 @@ const ExpenseTracker = () => {
                         responsive: true,
                         plugins: {
                             legend: {
-                                position: "bottom",
+                                position: "top",
                             },
                             tooltip: {
                                 callbacks: {
+                                    title: () => null, // Disable the title in the tooltip
                                     label: function (context) {
                                         const label = context.label || '';
                                         const value = context.raw || 0;
@@ -318,7 +331,10 @@ const ExpenseTracker = () => {
                                     ) : (
                                         filteredExpenses.map((expense) => (
                                             <Box key={expense.id} mb={2}>
-                                                <Typography variant="body1">
+                                                <Typography
+                                                    variant="body1"
+                                                    style={{color: CHART_COLORS[expense.category]}} // Apply color to category text
+                                                >
                                                     {expense.date}:
                                                     ${expense.amount.toFixed(2)} - {CATEGORIES[expense.category]} ({expense.description})
                                                 </Typography>
