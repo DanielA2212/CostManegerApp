@@ -1,8 +1,10 @@
 import {useState, useEffect} from "react";
 import {Chart} from "chart.js/auto";
-import expenseDB from "./expenseDB";
 import {Button, TextField, MenuItem, Box, Typography, Paper, Grid, Container} from "@mui/material";
 import {createTheme, ThemeProvider, styled} from "@mui/material/styles";
+import IDBWrapper from "./idb";
+
+const expenseDB = new IDBWrapper("ExpenseTrackerDB", "expenses");
 
 //font and background colors for buttons
 const theme = createTheme({
@@ -141,7 +143,7 @@ const ExpenseTracker = () => {
         })
         : [];
 
-    // Update pie chart whenever expenses or monthYear changes
+    // Update pie chart whenever expenses or Month And Year changes
     useEffect(() => {
         if (monthYear) {
             const categoryTotals = filteredExpenses.reduce((acc, expense) => {
@@ -192,7 +194,7 @@ const ExpenseTracker = () => {
         }
     }, [expenses, monthYear]); // Only update when expenses or monthYear changes
 
-    // Cleanup the chart when the component unmounts
+    // Cleanup the chart when expense removed
     useEffect(() => {
         return () => {
             if (pieChart) {
