@@ -19,8 +19,6 @@ const theme = createTheme({
     },
 });
 
-
-
 const StyledButton = styled(Button)(({ theme, variant }) => ({
     ...(variant === "delete" && {
         backgroundColor: theme.palette.secondary.main,
@@ -346,7 +344,7 @@ const ExpenseTracker = () => {
                                 <Box mt={4}>
                                     {monthYear && filteredExpenses.length === 0 ? (
                                         <Typography variant="body1" style={{color: "gray"}}>
-                                            No expenses for this month.
+                                            No expenses for this month
                                         </Typography>
                                     ) : (
                                         filteredExpenses.map((expense) => (
