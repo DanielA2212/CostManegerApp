@@ -19,6 +19,8 @@ const theme = createTheme({
     },
 });
 
+
+
 const StyledButton = styled(Button)(({ theme, variant }) => ({
     ...(variant === "delete" && {
         backgroundColor: theme.palette.secondary.main,
@@ -143,6 +145,19 @@ const ExpenseTracker = () => {
         };
         fetchExpenses();
     }, []);
+
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        setIsDarkMode(mediaQuery.matches);
+
+        const handleChange = (e) => setIsDarkMode(e.matches);
+        mediaQuery.addEventListener("change", handleChange);
+
+        return () => mediaQuery.removeEventListener("change", handleChange);
+    }, []);
+
 
     // Filter expenses based on the selected month and year
     const filteredExpenses = monthYear
@@ -290,6 +305,7 @@ const ExpenseTracker = () => {
                                         sx={{
                                             '& input[type="date"]::-webkit-calendar-picker-indicator': {
                                                 color: theme.palette.primary.dark, // Change the color of the calendar icon
+                                                filter: isDarkMode ? 'invert(1)':'invert(0)', //inverts the calendar icon color for dark mode
                                             },
                                             '& input[type="date"]::-webkit-inner-spin-button, & input[type="date"]::-webkit-clear-button': {
                                                 display: 'none', // Hide the spin and clear buttons
@@ -315,10 +331,14 @@ const ExpenseTracker = () => {
                                     onChange={(e) => setMonthYear(e.target.value)}
                                     sx={{
                                         '& input[type="month"]::-webkit-calendar-picker-indicator': {
-                                            color: theme.palette.primary.dark,
+                                            color: theme.palette.primary.dark, // Change the color of the calendar icon
+                                            filter: isDarkMode ? 'invert(1)':'invert(0)', //inverts the calendar icon color for dark mode
                                         },
                                         '& input[type="month"]::-webkit-inner-spin-button, & input[type="month"]::-webkit-clear-button': {
                                             display: 'none',
+                                        },
+                                        'input::-webkit-calendar-picker=indicator': {
+
                                         },
                                     }}
                                 />
