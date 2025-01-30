@@ -1,8 +1,17 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: "/CostManegerApp/",
+  server: {
+    port: 3000
+  },
+  resolve: {
+    alias: {
+      '@': '/src'
+    }
+  },
+  // Ensure proper handling of static assets
+  publicDir: 'public',
+  base: './'
 })

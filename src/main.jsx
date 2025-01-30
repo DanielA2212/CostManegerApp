@@ -1,10 +1,12 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
+// main.jsx - save in the src folder
+import React from 'react'
+import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
+import { CssBaseline } from '@mui/material'
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
+ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+        <CssBaseline />
+        <App />
+    </React.StrictMode>,
 )

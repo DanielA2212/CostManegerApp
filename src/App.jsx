@@ -2,19 +2,31 @@ import {useState, useEffect} from "react";
 import {Chart} from "chart.js/auto";
 import {Button, TextField, MenuItem, Box, Typography, Paper, Grid, Container} from "@mui/material";
 import {createTheme, ThemeProvider, styled} from "@mui/material/styles";
-import IDBWrapper from "./idb";
 
-const expenseDB = new IDBWrapper("ExpenseTrackerDB", "expenses");
+// Wait for IDB to be available
+const waitForIDB = () => {
+    return new Promise((resolve) => {
+        const checkIDB = () => {
+            if (window.idb) {
+                resolve(window.idb);
+            } else {
+                setTimeout(checkIDB, 100); // Check every 100ms
+            }
+        };
+        checkIDB();
+    });
+};
 
-//font and background colors for buttons
+let db = null;
+
 const theme = createTheme({
     palette: {
         primary: {
-            main: "#4caf50", // Green
+            main: "#4caf50",
             dark: "#434d55",
         },
         secondary: {
-            main: "#ffffff", // White
+            main: "#ffffff",
         },
     },
 });
@@ -25,7 +37,7 @@ const StyledButton = styled(Button)(({ theme, variant }) => ({
         color: "Maroon",
         border: `1px solid ${"Maroon"}`,
         '&:hover': {
-            backgroundColor: "Maroon", // Dark red on hover
+            backgroundColor: "Maroon",
             color: "white",
             border: `1px solid ${"Maroon"}`,
         },
@@ -41,59 +53,127 @@ const StyledButton = styled(Button)(({ theme, variant }) => ({
     }),
 }));
 
-// Custom styled TextField
 const StyledTextField = styled(TextField)(({theme}) => ({
     '& .MuiInputLabel-root': {
-        color: theme.palette.primary.main, // Label color
+        color: theme.palette.primary.main,
     },
     '& .MuiOutlinedInput-root': {
         '& fieldset': {
-            borderColor: theme.palette.primary.main, // Border color
+            borderColor: theme.palette.primary.main,
         },
         '&:hover fieldset': {
-            borderColor: theme.palette.primary.dark, // Border color on hover
+            borderColor: theme.palette.primary.dark,
         },
         '&.Mui-focused fieldset': {
-            borderColor: theme.palette.primary.main, // Border color when focused
+            borderColor: theme.palette.primary.main,
         },
     },
     '& .MuiInputBase-input': {
-        color: theme.palette.primary.main, // Input text color
+        color: theme.palette.primary.main,
     },
 }));
 
 const ExpenseTracker = () => {
     const [formData, setFormData] = useState({
-        amount: "",
-        category: "food",
+        sum: "",
+        category: "FOOD",
         description: "",
-        date: "",
+        date: new Date().toISOString().split('T')[0]
     });
-    const [monthYear, setMonthYear] = useState("");
+    const [monthYear, setMonthYear] = useState(new Date().toISOString().slice(0, 7)); // Initialize with current month
     const [expenses, setExpenses] = useState([]);
     const [message, setMessage] = useState({ text: "", type: "" });
     const [pieChart, setPieChart] = useState(null);
+    const [isDbInitialized, setIsDbInitialized] = useState(false);
 
     const CATEGORIES = {
-        food: "Food",
-        transportation: "Transportation",
-        utilities: "Utilities",
-        entertainment: "Entertainment",
-        other: "Other",
+        FOOD: "Food",
+        CAR: "Car",
+        UTILITIES: "Utilities",
+        ENTERTAINMENT: "Entertainment",
+        OTHER: "Other",
     };
 
     const CHART_COLORS = {
-        food: "#cc184e",
-        transportation: "#0066cc",
-        utilities: "#f18e04",
-        entertainment: "#0d6b10",
-        other: "#6619b5",
+        FOOD: "#cc184e",
+        CAR: "#0066cc",
+        UTILITIES: "#f18e04",
+        ENTERTAINMENT: "#0d6b10",
+        OTHER: "#6619b5",
     };
 
     const showMessage = (text, type = "success") => {
         setMessage({ text, type });
         setTimeout(() => setMessage({ text: "", type: "" }), 3000);
     };
+
+    const fetchExpensesForMonth = async (selectedMonth) => {
+        if (!db) return;
+
+        try {
+            const transaction = db.transaction('costs', 'readonly');
+            const store = transaction.objectStore('costs');
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                const allExpenses = request.result;
+                // Filter expenses for selected month
+                const [year, month] = selectedMonth.split('-');
+                const filteredExpenses = allExpenses.filter(expense => {
+                    const expenseDate = new Date(expense.date);
+                    return expenseDate.getFullYear() === parseInt(year) &&
+                        expenseDate.getMonth() === parseInt(month) - 1;
+                });
+                setExpenses(filteredExpenses);
+            };
+
+            request.onerror = (event) => {
+                console.error('Error fetching expenses:', event.target.error);
+                showMessage('Error fetching expenses', 'error');
+            };
+        } catch (error) {
+            console.error('Transaction error:', error);
+            showMessage('Error fetching expenses', 'error');
+        }
+    };
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const initDb = async () => {
+            try {
+                const idb = await waitForIDB();
+                const database = await idb.openCostsDB("costsdb", 1);
+
+                if (isMounted) {
+                    db = database;
+                    setIsDbInitialized(true);
+                    // Fetch expenses for current month after DB is initialized
+                    fetchExpensesForMonth(monthYear);
+                }
+            } catch (error) {
+                console.error('Failed to initialize database:', error);
+                if (isMounted) {
+                    setMessage({
+                        text: `Failed to initialize database: ${error.message}`,
+                        type: "error"
+                    });
+                }
+            }
+        };
+
+        initDb();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (isDbInitialized && monthYear) {
+            fetchExpensesForMonth(monthYear);
+        }
+    }, [monthYear, isDbInitialized]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -103,7 +183,10 @@ const ExpenseTracker = () => {
     const addExpense = async (e) => {
         e.preventDefault();
         try {
-            if (!formData.amount || formData.amount <= 0) {
+            if (!isDbInitialized || !db) {
+                throw new Error("Database not initialized. Please try again in a moment.");
+            }
+            if (!formData.sum || formData.sum <= 0) {
                 throw new Error("Amount Must Be Greater Than 0");
             }
             if (!formData.description.trim()) {
@@ -112,68 +195,45 @@ const ExpenseTracker = () => {
             if (!formData.date) {
                 throw new Error("Date is required");
             }
-            const newExpense = { ...formData, amount: parseFloat(formData.amount) };
-            const id = await expenseDB.save(newExpense);
-            const updatedExpenses = [...expenses, {
-                ...newExpense,
-                id
-            }].sort((a, b) => new Date(b.date) - new Date(a.date));
-            setExpenses(updatedExpenses);
-            setFormData({ amount: "", category: "food", description: "", date: "" });
-            showMessage("Expense Added Successfully!");
+
+            const newExpense = {
+                sum: parseFloat(formData.sum),
+                category: formData.category,
+                description: formData.description,
+                date: formData.date
+            };
+
+            const result = await db.addCost(newExpense);
+
+            if (result) {
+                // Refresh expenses for the current month after adding
+                await fetchExpensesForMonth(monthYear);
+                setFormData({
+                    sum: "",
+                    category: "FOOD",
+                    description: "",
+                    date: new Date().toISOString().split('T')[0]
+                });
+                showMessage("Expense Added Successfully!");
+            } else {
+                throw new Error("Failed to add expense");
+            }
         } catch (error) {
-            showMessage(error.message, "Error");
-        }
-    };
-
-    const deleteExpense = async (id) => {
-        if (window.confirm("Are You Sure You Want To Delete This Expense?")) {
-            await expenseDB.delete(id);
-            const updatedExpenses = expenses.filter((expense) => expense.id !== id);
-            setExpenses(updatedExpenses);
-            showMessage("Expense Deleted Successfully!");
+            showMessage(error.message, "error");
         }
     };
 
     useEffect(() => {
-        const fetchExpenses = async () => {
-            const storedExpenses = await expenseDB.getAll();
-            const sortedExpenses = storedExpenses.sort((a, b) => new Date(b.date) - new Date(a.date));
-            setExpenses(sortedExpenses);
-        };
-        fetchExpenses();
-    }, []);
+        // Destroy existing chart if it exists
+        if (pieChart) {
+            pieChart.destroy();
+            setPieChart(null);
+        }
 
-    const [isDarkMode, setIsDarkMode] = useState(false);
-
-    useEffect(() => {
-        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-        setIsDarkMode(mediaQuery.matches);
-
-        const handleChange = (e) => setIsDarkMode(e.matches);
-        mediaQuery.addEventListener("change", handleChange);
-
-        return () => mediaQuery.removeEventListener("change", handleChange);
-    }, []);
-
-
-    // Filter expenses based on the selected month and year
-    const filteredExpenses = monthYear
-        ? expenses.filter((expense) => {
-            const expenseDate = new Date(expense.date);
-            const [year, month] = monthYear.split("-").map(Number);
-            return (
-                expenseDate.getFullYear() === year &&
-                expenseDate.getMonth() === month - 1
-            );
-        })
-        : [];
-
-    // Update pie chart whenever expenses or Month And Year changes
-    useEffect(() => {
-        if (monthYear) {
-            const categoryTotals = filteredExpenses.reduce((acc, expense) => {
-                acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
+        // Only create new chart if there are expenses
+        if (monthYear && expenses.length > 0) {
+            const categoryTotals = expenses.reduce((acc, expense) => {
+                acc[expense.category] = (acc[expense.category] || 0) + expense.sum;
                 return acc;
             }, {});
 
@@ -187,13 +247,8 @@ const ExpenseTracker = () => {
                 ],
             };
 
-            if (pieChart) {
-                // Update the existing chart data
-                pieChart.data = data;
-                pieChart.update();
-            } else {
-                // Create a new chart if it doesn't exist
-                const ctx = document.getElementById("pieChart").getContext("2d");
+            const ctx = document.getElementById("pieChart")?.getContext("2d");
+            if (ctx) {
                 const newPieChart = new Chart(ctx, {
                     type: "pie",
                     data: data,
@@ -205,11 +260,11 @@ const ExpenseTracker = () => {
                             },
                             tooltip: {
                                 callbacks: {
-                                    title: () => null, // Disable the title in the tooltip
+                                    title: () => null,
                                     label: function (context) {
                                         const label = context.label || '';
                                         const value = context.raw || 0;
-                                        return `${label}: $${value.toFixed(2)}`; // Add dollar sign and format to 2 decimal places
+                                        return `${label}: ${value.toFixed(2)}`;
                                     },
                                 },
                             },
@@ -219,9 +274,8 @@ const ExpenseTracker = () => {
                 setPieChart(newPieChart);
             }
         }
-    }, [expenses, monthYear]); // Only update when expenses or monthYear changes
+    }, [expenses, monthYear]);
 
-    // Cleanup the chart when expense removed
     useEffect(() => {
         return () => {
             if (pieChart) {
@@ -259,8 +313,8 @@ const ExpenseTracker = () => {
                                         margin="normal"
                                         label="Amount"
                                         type="number"
-                                        name="amount"
-                                        value={formData.amount}
+                                        name="sum"
+                                        value={formData.sum}
                                         onChange={handleInputChange}
                                         required
                                         inputProps={{ step: "0.01", min: "0" }}
@@ -275,9 +329,9 @@ const ExpenseTracker = () => {
                                         onChange={handleInputChange}
                                         required
                                     >
-                                        {Object.keys(CATEGORIES).map((key) => (
+                                        {Object.entries(CATEGORIES).map(([key, value]) => (
                                             <MenuItem key={key} value={key}>
-                                                {CATEGORIES[key]}
+                                                {value}
                                             </MenuItem>
                                         ))}
                                     </StyledTextField>
@@ -300,17 +354,12 @@ const ExpenseTracker = () => {
                                         onChange={handleInputChange}
                                         required
                                         InputLabelProps={{ shrink: true }}
-                                        sx={{
-                                            '& input[type="date"]::-webkit-calendar-picker-indicator': {
-                                                color: theme.palette.primary.dark, // Change the color of the calendar icon
-                                                filter: isDarkMode ? 'invert(1)':'invert(0)', //inverts the calendar icon color for dark mode
-                                            },
-                                            '& input[type="date"]::-webkit-inner-spin-button, & input[type="date"]::-webkit-clear-button': {
-                                                display: 'none', // Hide the spin and clear buttons
-                                            },
-                                        }}
                                     />
-                                    <StyledButton type="submit" fullWidth>
+                                    <StyledButton
+                                        type="submit"
+                                        fullWidth
+                                        disabled={!isDbInitialized}
+                                    >
                                         Add Expense
                                     </StyledButton>
                                 </form>
@@ -327,47 +376,34 @@ const ExpenseTracker = () => {
                                     type="month"
                                     value={monthYear}
                                     onChange={(e) => setMonthYear(e.target.value)}
-                                    sx={{
-                                        '& input[type="month"]::-webkit-calendar-picker-indicator': {
-                                            color: theme.palette.primary.dark, // Change the color of the calendar icon
-                                            filter: isDarkMode ? 'invert(1)':'invert(0)', //inverts the calendar icon color for dark mode
-                                        },
-                                        '& input[type="month"]::-webkit-inner-spin-button, & input[type="month"]::-webkit-clear-button': {
-                                            display: 'none',
-                                        },
-                                        'input::-webkit-calendar-picker=indicator': {
-
-                                        },
-                                    }}
+                                    InputLabelProps={{ shrink: true }}
                                 />
 
                                 <Box mt={4}>
-                                    {monthYear && filteredExpenses.length === 0 ? (
+                                    {monthYear && expenses.length === 0 ? (
                                         <Typography variant="body1" style={{color: "gray"}}>
                                             No expenses for this month
                                         </Typography>
                                     ) : (
-                                        filteredExpenses.map((expense) => (
-                                            <Box key={expense.id} mb={2}>
-                                                <Typography
-                                                    variant="body1"
-                                                    style={{color: CHART_COLORS[expense.category]}} // Apply color to category text
-                                                >
-                                                    {new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(expense.date))}:
-                                                    ${expense.amount.toFixed(2)} - {CATEGORIES[expense.category]} ({expense.description})
-                                                </Typography>
-                                                <StyledButton
-                                                    onClick={() => deleteExpense(expense.id)}
-                                                    fullWidth
-                                                    variant="delete"
-                                                >
-                                                    Delete
-                                                </StyledButton>
-                                            </Box>
-                                        ))
+                                        <>
+                                            {expenses.map((expense, index) => (
+                                                <Box key={index} mb={2}>
+                                                    <Typography
+                                                        variant="body1"
+                                                        style={{color: CHART_COLORS[expense.category]}}
+                                                    >
+                                                        {new Date(expense.date).toLocaleDateString()} - ${expense.sum.toFixed(2)} - {CATEGORIES[expense.category]} ({expense.description})
+                                                    </Typography>
+                                                </Box>
+                                            ))}
+                                            {expenses.length > 0 && (
+                                                <Box mt={4}>
+                                                    <canvas id="pieChart"></canvas>
+                                                </Box>
+                                            )}
+                                        </>
                                     )}
                                 </Box>
-                                <canvas id="pieChart" style={{ marginTop: "20px" }}></canvas>
                             </Paper>
                         </Grid>
                     </Grid>
