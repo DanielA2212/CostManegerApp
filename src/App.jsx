@@ -6,15 +6,15 @@ import IDBWrapper from "./idb";
 
 const expenseDB = new IDBWrapper("ExpenseTrackerDB", "expenses");
 
-//font and background colors for buttons
+/*font and background colors for buttons*/
 const theme = createTheme({
     palette: {
         primary: {
-            main: "#4caf50", // Green
+            main: "#4caf50", /* Green */
             dark: "#434d55",
         },
         secondary: {
-            main: "#ffffff", // White
+            main: "#ffffff", /* White */
         },
     },
 });
@@ -25,7 +25,7 @@ const StyledButton = styled(Button)(({ theme, variant }) => ({
         color: "Maroon",
         border: `1px solid ${"Maroon"}`,
         '&:hover': {
-            backgroundColor: "Maroon", // Dark red on hover
+            backgroundColor: "Maroon", /* Dark red on hover */
             color: "white",
             border: `1px solid ${"Maroon"}`,
         },
@@ -41,24 +41,24 @@ const StyledButton = styled(Button)(({ theme, variant }) => ({
     }),
 }));
 
-// Custom styled TextField
+/* Custom styled TextField */
 const StyledTextField = styled(TextField)(({theme}) => ({
     '& .MuiInputLabel-root': {
-        color: theme.palette.primary.main, // Label color
+        color: theme.palette.primary.main, /* Label color */
     },
     '& .MuiOutlinedInput-root': {
         '& fieldset': {
-            borderColor: theme.palette.primary.main, // Border color
+            borderColor: theme.palette.primary.main, /* Border color */
         },
         '&:hover fieldset': {
-            borderColor: theme.palette.primary.dark, // Border color on hover
+            borderColor: theme.palette.primary.dark, /* Border color on hover */
         },
         '&.Mui-focused fieldset': {
-            borderColor: theme.palette.primary.main, // Border color when focused
+            borderColor: theme.palette.primary.main, /* Border color when focused */
         },
     },
     '& .MuiInputBase-input': {
-        color: theme.palette.primary.main, // Input text color
+        color: theme.palette.primary.main, /* Input text color */
     },
 }));
 
@@ -157,7 +157,7 @@ const ExpenseTracker = () => {
     }, []);
 
 
-    // Filter expenses based on the selected month and year
+    /* Filter expenses based on the selected month and year */
     const filteredExpenses = monthYear
         ? expenses.filter((expense) => {
             const expenseDate = new Date(expense.date);
@@ -169,7 +169,7 @@ const ExpenseTracker = () => {
         })
         : [];
 
-    // Update pie chart whenever expenses or Month And Year changes
+    /* Update pie chart whenever expenses or Month And Year changes */
     useEffect(() => {
         if (monthYear) {
             const categoryTotals = filteredExpenses.reduce((acc, expense) => {
@@ -188,11 +188,11 @@ const ExpenseTracker = () => {
             };
 
             if (pieChart) {
-                // Update the existing chart data
+                /* Update the existing chart data */
                 pieChart.data = data;
                 pieChart.update();
             } else {
-                // Create a new chart if it doesn't exist
+                /* Create a new chart if it doesn't exist */
                 const ctx = document.getElementById("pieChart").getContext("2d");
                 const newPieChart = new Chart(ctx, {
                     type: "pie",
@@ -205,11 +205,11 @@ const ExpenseTracker = () => {
                             },
                             tooltip: {
                                 callbacks: {
-                                    title: () => null, // Disable the title in the tooltip
+                                    title: () => null, /* Disable the title in the tooltip */
                                     label: function (context) {
                                         const label = context.label || '';
                                         const value = context.raw || 0;
-                                        return `${label}: $${value.toFixed(2)}`; // Add dollar sign and format to 2 decimal places
+                                        return `${label}: $${value.toFixed(2)}`; /* Add dollar sign and format to 2 decimal places */
                                     },
                                 },
                             },
@@ -219,9 +219,9 @@ const ExpenseTracker = () => {
                 setPieChart(newPieChart);
             }
         }
-    }, [expenses, monthYear]); // Only update when expenses or monthYear changes
+    }, [expenses, monthYear]); /* Only update when expenses or monthYear changes */
 
-    // Cleanup the chart when expense removed
+    /* Cleanup the chart when expense removed */
     useEffect(() => {
         return () => {
             if (pieChart) {
@@ -302,11 +302,11 @@ const ExpenseTracker = () => {
                                         InputLabelProps={{ shrink: true }}
                                         sx={{
                                             '& input[type="date"]::-webkit-calendar-picker-indicator': {
-                                                color: theme.palette.primary.dark, // Change the color of the calendar icon
-                                                filter: isDarkMode ? 'invert(1)':'invert(0)', //inverts the calendar icon color for dark mode
+                                                color: theme.palette.primary.dark, /* Change the color of the calendar icon */
+                                                filter: isDarkMode ? 'invert(1)':'invert(0)', /* inverts the calendar icon color for dark mode */
                                             },
                                             '& input[type="date"]::-webkit-inner-spin-button, & input[type="date"]::-webkit-clear-button': {
-                                                display: 'none', // Hide the spin and clear buttons
+                                                display: 'none', /* Hide the spin and clear buttons */
                                             },
                                         }}
                                     />
@@ -329,8 +329,8 @@ const ExpenseTracker = () => {
                                     onChange={(e) => setMonthYear(e.target.value)}
                                     sx={{
                                         '& input[type="month"]::-webkit-calendar-picker-indicator': {
-                                            color: theme.palette.primary.dark, // Change the color of the calendar icon
-                                            filter: isDarkMode ? 'invert(1)':'invert(0)', //inverts the calendar icon color for dark mode
+                                            color: theme.palette.primary.dark, /* Change the color of the calendar icon */
+                                            filter: isDarkMode ? 'invert(1)':'invert(0)', /* inverts the calendar icon color for dark mode */
                                         },
                                         '& input[type="month"]::-webkit-inner-spin-button, & input[type="month"]::-webkit-clear-button': {
                                             display: 'none',
@@ -351,7 +351,7 @@ const ExpenseTracker = () => {
                                             <Box key={expense.id} mb={2}>
                                                 <Typography
                                                     variant="body1"
-                                                    style={{color: CHART_COLORS[expense.category]}} // Apply color to category text
+                                                    style={{color: CHART_COLORS[expense.category]}} /* Apply color to category text */
                                                 >
                                                     {new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(expense.date))}:
                                                     ${expense.amount.toFixed(2)} - {CATEGORIES[expense.category]} ({expense.description})
