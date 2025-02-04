@@ -2,9 +2,8 @@ import {useState, useEffect} from "react";
 import {Chart} from "chart.js/auto";
 import {Button, TextField, MenuItem, Box, Typography, Paper, Grid, Container} from "@mui/material";
 import {createTheme, ThemeProvider, styled} from "@mui/material/styles";
-import IDBWrapper from "./idb";
 
-const expenseDB = new IDBWrapper("ExpenseTrackerDB", "expenses");
+const expenseDB = new window.IDBWrapper("ExpenseTrackerDB", "expenses");
 
 /*font and background colors for buttons*/
 const theme = createTheme({

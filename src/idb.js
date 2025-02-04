@@ -1,4 +1,5 @@
-export default class IDBWrapper {
+// Define the IDBWrapper class globally
+window.IDBWrapper = class IDBWrapper {
     constructor(dbName, storeName) {
         this.dbName = dbName;
         this.storeName = storeName;
@@ -27,7 +28,7 @@ export default class IDBWrapper {
             const store = transaction.objectStore(this.storeName);
 
             const request = store.put(data);
-            request.onsuccess = () => resolve(request.result);
+            request.onsuccess = () => resolve(true);
             request.onerror = (event) => reject(event.target.error);
         });
     }
@@ -55,4 +56,24 @@ export default class IDBWrapper {
             request.onerror = (event) => reject(event.target.error);
         });
     }
-}
+};
+
+// Create the global idb object
+window.idb = {
+    wrapper: null,
+    async openCostsDB(dbName) {
+        this.wrapper = new window.IDBWrapper(dbName, "costs");
+        await this.wrapper.open();
+        return this;
+    },
+
+    async addCost(costData) {
+        try {
+            await this.wrapper.save(costData);
+            return true;
+        } catch (error) {
+            console.error("Error adding cost:", error);
+            return false;
+        }
+    }
+};
