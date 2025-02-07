@@ -11,7 +11,7 @@ export default class IDBWrapper {
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
                 if (!db.objectStoreNames.contains(this.storeName)) {
-                    db.createObjectStore(this.storeName, { keyPath: "id", autoIncrement: true });
+                    db.createObjectStore(this.storeName, { keyPath: 'id', autoIncrement: true });
                 }
             };
 
@@ -23,7 +23,7 @@ export default class IDBWrapper {
     async save(data) {
         const db = await this.open();
         return new Promise((resolve, reject) => {
-            const transaction = db.transaction(this.storeName, "readwrite");
+            const transaction = db.transaction(this.storeName, 'readwrite');
             const store = transaction.objectStore(this.storeName);
 
             const request = store.put(data);
@@ -35,7 +35,7 @@ export default class IDBWrapper {
     async getAll() {
         const db = await this.open();
         return new Promise((resolve, reject) => {
-            const transaction = db.transaction(this.storeName, "readonly");
+            const transaction = db.transaction(this.storeName, 'readonly');
             const store = transaction.objectStore(this.storeName);
 
             const request = store.getAll();
@@ -47,7 +47,7 @@ export default class IDBWrapper {
     async delete(id) {
         const db = await this.open();
         return new Promise((resolve, reject) => {
-            const transaction = db.transaction(this.storeName, "readwrite");
+            const transaction = db.transaction(this.storeName, 'readwrite');
             const store = transaction.objectStore(this.storeName);
 
             const request = store.delete(id);

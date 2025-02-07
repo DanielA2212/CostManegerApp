@@ -1,33 +1,34 @@
-import {useState, useEffect} from "react";
-import {Chart} from "chart.js/auto";
-import {Button, TextField, MenuItem, Box, Typography, Paper, Grid, Container} from "@mui/material";
-import {createTheme, ThemeProvider, styled} from "@mui/material/styles";
-import IDBWrapper from "./idb";
+import {useState, useEffect} from 'react';
+import {Chart} from 'chart.js/auto';
+import {Button, TextField, MenuItem, Box, Typography, Paper, Grid, Container} from '@mui/material';
+import {createTheme, ThemeProvider, styled} from '@mui/material/styles';
+import IDBWrapper from './idb';
 
-const expenseDB = new IDBWrapper("ExpenseTrackerDB", "expenses");
+const expenseDB = new IDBWrapper('ExpenseTrackerDB', 'expenses');
 
-/*font and background colors for buttons*/
+/*color themes*/
 const theme = createTheme({
     palette: {
         primary: {
-            main: "#4caf50", /* Green */
-            dark: "#434d55",
+            main: '#4caf50', /* Green */
+            dark: '#434d55',
         },
         secondary: {
-            main: "#ffffff", /* White */
+            main: '#ffffff', /* White */
         },
     },
 });
 
+/*different colors for buttons*/
 const StyledButton = styled(Button)(({ theme, variant }) => ({
-    ...(variant === "delete" && {
+    ...(variant === 'delete' && {
         backgroundColor: theme.palette.secondary.main,
-        color: "Maroon",
-        border: `1px solid ${"Maroon"}`,
+        color: 'Maroon',
+        border: `1px solid ${'Maroon'}`,
         '&:hover': {
-            backgroundColor: "Maroon", /* Dark red on hover */
-            color: "white",
-            border: `1px solid ${"Maroon"}`,
+            backgroundColor: 'Maroon', /* Dark red on hover */
+            color: 'white',
+            border: `1px solid ${'Maroon'}`,
         },
     }),
     ...(!variant && {
@@ -64,35 +65,35 @@ const StyledTextField = styled(TextField)(({theme}) => ({
 
 const ExpenseTracker = () => {
     const [formData, setFormData] = useState({
-        amount: "",
-        category: "food",
-        description: "",
-        date: "",
+        amount: '',
+        category: 'food',
+        description: '',
+        date: '',
     });
-    const [monthYear, setMonthYear] = useState("");
+    const [monthYear, setMonthYear] = useState('');
     const [expenses, setExpenses] = useState([]);
-    const [message, setMessage] = useState({ text: "", type: "" });
+    const [message, setMessage] = useState({ text: '', type: '' });
     const [pieChart, setPieChart] = useState(null);
 
     const CATEGORIES = {
-        food: "Food",
-        transportation: "Transportation",
-        utilities: "Utilities",
-        entertainment: "Entertainment",
-        other: "Other",
+        food: 'Food',
+        transportation: 'Transportation',
+        utilities: 'Utilities',
+        entertainment: 'Entertainment',
+        other: 'Other',
     };
 
     const CHART_COLORS = {
-        food: "#cc184e",
-        transportation: "#0066cc",
-        utilities: "#f18e04",
-        entertainment: "#0d6b10",
-        other: "#6619b5",
+        food: '#cc184e',
+        transportation: '#0066cc',
+        utilities: '#f18e04',
+        entertainment: '#0d6b10',
+        other: '#6619b5',
     };
 
-    const showMessage = (text, type = "success") => {
+    const showMessage = (text, type = 'success') => {
         setMessage({ text, type });
-        setTimeout(() => setMessage({ text: "", type: "" }), 3000);
+        setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     };
 
     const handleInputChange = (e) => {
@@ -104,13 +105,13 @@ const ExpenseTracker = () => {
         e.preventDefault();
         try {
             if (!formData.amount || formData.amount <= 0) {
-                throw new Error("Amount Must Be Greater Than 0");
+                throw new Error('Amount Must Be Greater Than 0');
             }
             if (!formData.description.trim()) {
-                throw new Error("Description is required");
+                throw new Error('Description is required');
             }
             if (!formData.date) {
-                throw new Error("Date is required");
+                throw new Error('Date is required');
             }
             const newExpense = { ...formData, amount: parseFloat(formData.amount) };
             const id = await expenseDB.save(newExpense);
@@ -119,22 +120,23 @@ const ExpenseTracker = () => {
                 id
             }].sort((a, b) => new Date(b.date) - new Date(a.date));
             setExpenses(updatedExpenses);
-            setFormData({ amount: "", category: "food", description: "", date: "" });
-            showMessage("Expense Added Successfully!");
+            setFormData({ amount: '', category: 'food', description: '', date: '' });
+            showMessage('Expense Added Successfully!');
         } catch (error) {
-            showMessage(error.message, "Error");
+            showMessage(error.message, 'Error');
         }
     };
 
     const deleteExpense = async (id) => {
-        if (window.confirm("Are You Sure You Want To Delete This Expense?")) {
+        if (window.confirm('Are You Sure You Want To Delete This Expense?')) {
             await expenseDB.delete(id);
             const updatedExpenses = expenses.filter((expense) => expense.id !== id);
             setExpenses(updatedExpenses);
-            showMessage("Expense Deleted Successfully!");
+            showMessage('Expense Deleted Successfully!');
         }
     };
 
+    /*sorting expenses*/
     useEffect(() => {
         const fetchExpenses = async () => {
             const storedExpenses = await expenseDB.getAll();
@@ -144,16 +146,16 @@ const ExpenseTracker = () => {
         fetchExpenses();
     }, []);
 
+    /*adjustments for dark and light mode of the browser*/
     const [isDarkMode, setIsDarkMode] = useState(false);
-
     useEffect(() => {
-        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         setIsDarkMode(mediaQuery.matches);
 
         const handleChange = (e) => setIsDarkMode(e.matches);
-        mediaQuery.addEventListener("change", handleChange);
+        mediaQuery.addEventListener('change', handleChange);
 
-        return () => mediaQuery.removeEventListener("change", handleChange);
+        return () => mediaQuery.removeEventListener('change', handleChange);
     }, []);
 
 
@@ -161,7 +163,7 @@ const ExpenseTracker = () => {
     const filteredExpenses = monthYear
         ? expenses.filter((expense) => {
             const expenseDate = new Date(expense.date);
-            const [year, month] = monthYear.split("-").map(Number);
+            const [year, month] = monthYear.split('-').map(Number);
             return (
                 expenseDate.getFullYear() === year &&
                 expenseDate.getMonth() === month - 1
@@ -193,15 +195,15 @@ const ExpenseTracker = () => {
                 pieChart.update();
             } else {
                 /* Create a new chart if it doesn't exist */
-                const ctx = document.getElementById("pieChart").getContext("2d");
+                const ctx = document.getElementById('pieChart').getContext('2d');
                 const newPieChart = new Chart(ctx, {
-                    type: "pie",
+                    type: 'pie',
                     data: data,
                     options: {
                         responsive: true,
                         plugins: {
                             legend: {
-                                position: "top",
+                                position: 'top',
                             },
                             tooltip: {
                                 callbacks: {
@@ -234,15 +236,15 @@ const ExpenseTracker = () => {
         <ThemeProvider theme={theme}>
             <Container>
                 <Box p={4}>
-                    <Typography variant="h4" gutterBottom>Expense Tracker</Typography>
+                    <Typography variant='h4' gutterBottom>Expense Tracker</Typography>
 
                     {message.text && (
                         <Typography
-                            variant="h6"
+                            variant='h6'
                             style={{
-                                color: message.type === "error" ? "red" : "limegreen",
-                                fontSize: "1.5rem",
-                                fontWeight: "bold",
+                                color: message.type === 'error' ? 'red' : 'limegreen',
+                                fontSize: '1.5rem',
+                                fontWeight: 'bold',
                             }}
                         >
                             {message.text}
@@ -251,26 +253,26 @@ const ExpenseTracker = () => {
 
                     <Grid container spacing={4}>
                         <Grid item xs={12} md={6}>
-                            <Paper elevation={3} style={{ padding: "20px" }}>
-                                <Typography variant="h5" gutterBottom>Add New Expense</Typography>
+                            <Paper elevation={3} style={{ padding: '20px' }}>
+                                <Typography variant='h5' gutterBottom>Add New Expense</Typography>
                                 <form onSubmit={addExpense}>
                                     <StyledTextField
                                         fullWidth
-                                        margin="normal"
-                                        label="Amount"
-                                        type="number"
-                                        name="amount"
+                                        margin='normal'
+                                        label='Amount'
+                                        type='number'
+                                        name='amount'
                                         value={formData.amount}
                                         onChange={handleInputChange}
                                         required
-                                        inputProps={{ step: "0.01", min: "0" }}
+                                        inputProps={{ step: '0.01', min: '0' }}
                                     />
                                     <StyledTextField
                                         fullWidth
-                                        margin="normal"
+                                        margin='normal'
                                         select
-                                        label="Category"
-                                        name="category"
+                                        label='Category'
+                                        name='category'
                                         value={formData.category}
                                         onChange={handleInputChange}
                                         required
@@ -283,19 +285,19 @@ const ExpenseTracker = () => {
                                     </StyledTextField>
                                     <StyledTextField
                                         fullWidth
-                                        margin="normal"
-                                        label="Description"
-                                        name="description"
+                                        margin='normal'
+                                        label='Description'
+                                        name='description'
                                         value={formData.description}
                                         onChange={handleInputChange}
                                         required
                                     />
                                     <StyledTextField
                                         fullWidth
-                                        margin="normal"
-                                        label="Date"
-                                        type="date"
-                                        name="date"
+                                        margin='normal'
+                                        label='Date'
+                                        type='date'
+                                        name='date'
                                         value={formData.date}
                                         onChange={handleInputChange}
                                         required
@@ -310,7 +312,7 @@ const ExpenseTracker = () => {
                                             },
                                         }}
                                     />
-                                    <StyledButton type="submit" fullWidth>
+                                    <StyledButton type='submit' fullWidth>
                                         Add Expense
                                     </StyledButton>
                                 </form>
@@ -318,13 +320,13 @@ const ExpenseTracker = () => {
                         </Grid>
 
                         <Grid item xs={12} md={6}>
-                            <Paper elevation={3} style={{ padding: "20px" }}>
-                                <Typography variant="h5" gutterBottom>View Expenses</Typography>
+                            <Paper elevation={3} style={{ padding: '20px' }}>
+                                <Typography variant='h5' gutterBottom>View Expenses</Typography>
                                 <StyledTextField
                                     fullWidth
-                                    margin="normal"
-                                    label="Select Month and Year"
-                                    type="month"
+                                    margin='normal'
+                                    label='Select Month and Year'
+                                    type='month'
                                     value={monthYear}
                                     onChange={(e) => setMonthYear(e.target.value)}
                                     sx={{
@@ -343,14 +345,14 @@ const ExpenseTracker = () => {
 
                                 <Box mt={4}>
                                     {monthYear && filteredExpenses.length === 0 ? (
-                                        <Typography variant="body1" style={{color: "gray"}}>
+                                        <Typography variant='body1' style={{color: 'gray'}}>
                                             No expenses for this month
                                         </Typography>
                                     ) : (
                                         filteredExpenses.map((expense) => (
                                             <Box key={expense.id} mb={2}>
                                                 <Typography
-                                                    variant="body1"
+                                                    variant='body1'
                                                     style={{color: CHART_COLORS[expense.category]}} /* Apply color to category text */
                                                 >
                                                     {new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(expense.date))}:
@@ -359,7 +361,7 @@ const ExpenseTracker = () => {
                                                 <StyledButton
                                                     onClick={() => deleteExpense(expense.id)}
                                                     fullWidth
-                                                    variant="delete"
+                                                    variant='delete'
                                                 >
                                                     Delete
                                                 </StyledButton>
@@ -367,7 +369,7 @@ const ExpenseTracker = () => {
                                         ))
                                     )}
                                 </Box>
-                                <canvas id="pieChart" style={{ marginTop: "20px" }}></canvas>
+                                <canvas id='pieChart' style={{ marginTop: '20px' }}></canvas>
                             </Paper>
                         </Grid>
                     </Grid>
